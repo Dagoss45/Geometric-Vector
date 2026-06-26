@@ -56,7 +56,7 @@ typedef struct
 } Vector;
 ```
 
-`coordinates` is a **flexible array member (FAM)**: it doesn't occupy space inside the struct itself, but is laid out in memory immediately after `dim`, as part of the *same* heap allocation. This keeps the dimension count and the coordinate data contiguous, avoiding a second allocation:
+`coordinates` is a **flexible array member (FAM)**: it doesn't occupy space inside the struct itself, but is laid out in memory immediately after `dim`, as part of the _same_ heap allocation. This keeps the dimension count and the coordinate data contiguous, avoiding a second allocation:
 
 ```
 +--------+-----------------------------------------+
@@ -139,12 +139,13 @@ Vector *create_vector(const float coordinates[], const int *dim);
 
 Allocates a new `Vector` and copies `*dim` coordinates into it.
 
-| Parameter | Description |
-|---|---|
+| Parameter     | Description                                                    |
+| ------------- | -------------------------------------------------------------- |
 | `coordinates` | Array of `float` values, must contain at least `*dim` elements |
-| `dim` | Pointer to the number of dimensions (must be `> 0`) |
+| `dim`         | Pointer to the number of dimensions (must be `> 0`)            |
 
 **Returns:** a pointer to the newly allocated `Vector`, or `NULL` if:
+
 - `coordinates` or `dim` is `NULL`,
 - `*dim` is less than or equal to `0`,
 - the requested size would overflow during allocation,
@@ -166,9 +167,9 @@ void destroy_vector(Vector **v);
 
 Frees the memory owned by a `Vector` and sets the caller's pointer to `NULL`, to avoid dangling-pointer reuse.
 
-| Parameter | Description |
-|---|---|
-| `v` | Address of the vector pointer to destroy |
+| Parameter | Description                              |
+| --------- | ---------------------------------------- |
+| `v`       | Address of the vector pointer to destroy |
 
 **Returns:** nothing. Safe to call with `v == NULL` or `*v == NULL` (no-op in both cases).
 
@@ -186,12 +187,13 @@ Vector *algebric_sum(const Vector *v1, const Vector *v2, const int *operation);
 
 Computes the element-wise sum or difference of two vectors of equal dimension.
 
-| Parameter | Description |
-|---|---|
-| `v1`, `v2` | Operand vectors, must share the same `dim` |
+| Parameter   | Description                                                |
+| ----------- | ---------------------------------------------------------- |
+| `v1`, `v2`  | Operand vectors, must share the same `dim`                 |
 | `operation` | Pointer to an `int`: `0` for addition, `1` for subtraction |
 
 **Returns:** a newly allocated `Vector` with the result, or `NULL` if:
+
 - `v1`, `v2`, or `operation` is `NULL`,
 - `v1->dim != v2->dim`,
 - `*operation` is neither `0` nor `1`,
@@ -212,8 +214,8 @@ float dot_product(const Vector *v1, const Vector *v2);
 
 Computes the scalar (dot) product of two vectors of equal dimension.
 
-| Parameter | Description |
-|---|---|
+| Parameter  | Description                                |
+| ---------- | ------------------------------------------ |
 | `v1`, `v2` | Operand vectors, must share the same `dim` |
 
 **Returns:** the dot product as a `float`, or `NAN` if `v1`/`v2` is `NULL` or their dimensions differ.
@@ -237,8 +239,8 @@ Vector *cross_product(const Vector *v1, const Vector *v2);
 
 Computes the 3-dimensional cross product of two vectors.
 
-| Parameter | Description |
-|---|---|
+| Parameter  | Description                                    |
+| ---------- | ---------------------------------------------- |
 | `v1`, `v2` | Operand vectors, **both must have `dim == 3`** |
 
 **Returns:** a newly allocated 3D `Vector` with the result, or `NULL` if `v1`/`v2` is `NULL` or either does not have exactly 3 dimensions.
@@ -257,9 +259,9 @@ float norm(const Vector *v);
 
 Computes the Euclidean norm (length) of a vector.
 
-| Parameter | Description |
-|---|---|
-| `v` | The vector to measure |
+| Parameter | Description           |
+| --------- | --------------------- |
+| `v`       | The vector to measure |
 
 **Returns:** the norm as a `float`, or `NAN` if `v` is `NULL`.
 
@@ -342,25 +344,11 @@ a x b   = (-3.00, 6.00, -3.00)
 ## Memory management
 
 - Every successful call to `create_vector`, `algebric_sum`, or `cross_product` allocates memory on the heap that **you own** and must release with `destroy_vector`.
-- `destroy_vector` takes the *address* of the pointer (`Vector **`) and nulls it out after freeing, which makes accidental double-free or use-after-free easier to avoid — calling `destroy_vector` again on the same variable is always safe.
+- `destroy_vector` takes the _address_ of the pointer (`Vector **`) and nulls it out after freeing, which makes accidental double-free or use-after-free easier to avoid — calling `destroy_vector` again on the same variable is always safe.
 - `dot_product` and `norm` never allocate memory and require no cleanup.
 - The library performs no allocation tracking; it's the caller's responsibility to destroy every vector it creates.
 
 ---
-
-## Known issues
-
-No correctness, memory-safety, or undefined-behavior issues are currently known in this version: the code compiles cleanly with `-std=c11 -Wall -Wextra -Wpedantic`, all `NULL` checks are in place, the integer-overflow guard in `create_vector` is correct, dynamic allocation (rather than a stack VLA) is used throughout, and `cross_product` has been verified against known reference values (e.g. `(1,2,3) × (4,5,6) = (-3, 6, -3)`).
-
-If you find a bug, please open an issue with a minimal reproducible example.
-
-## Possible improvements
-
-- [ ] Add a `print_vector` helper for debugging.
-- [ ] Add a `normalize` function returning a unit vector.
-- [ ] Add a unit test suite (e.g. with Unity or CMocka) and wire it into the Makefile.
-- [ ] Consider passing `dim`/`operation` by value instead of by pointer for a simpler API, since there's no functional need for indirection there.
-- [ ] Add CI (GitHub Actions) to build and test on every push.
 
 ## Contributing
 
